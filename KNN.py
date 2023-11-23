@@ -8,32 +8,39 @@ def load_data(filename):
         csv_reader = csv.reader(file)
         next(csv_reader)  # Skip the header
         for row in csv_reader:
-            data = []
-            for i in range(len(row)):
-                if(i == 0 or i == 11 or i == 12 or i == 13 or i == 20): # TODO: Need to tune!
-                    data.append(int(row[i]))
-            dataset.append(data)
-            
+            for i in range(len(row)-1):
+                row[i] = float(row[i]) * feature_weight[i]
+            dataset.append(row)
     return dataset
+
+# Normalize the data
+def normalize_data(dataset):
+    minmax = []
+    for i in range(len(dataset[0])-1):
+        col_values = [row[i] for row in dataset]
+        value_min = min(col_values)
+        value_max = max(col_values)
+        minmax.append([value_min, value_max])
+    for row in dataset:
+        for i in range(len(row)-1):
+            if minmax[i][1] - minmax[i][0] != 0:
+                row[i] = (row[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
 
 # Calculate Euclidean distance
 def euclidean_distance(row1, row2):
     distance = 0.0
-    for i in range(len(row1)-1): # TODO: Need to tune!
-        if(i == 3): 
-            distance += (row1[i] - row2[i])**2 * 1.5
-        else:
-            distance += (row1[i] - row2[i])**2 * 0.5
+    for i in range(len(row1)-1):
+        distance += (row1[i] - row2[i])**2
     return math.sqrt(distance)
 
 # Get nearest neighbors
 def get_neighbors(train, test_row, num_neighbors):
-    distances = list()
+    distances = []
     for train_row in train:
         dist = euclidean_distance(test_row, train_row)
         distances.append((train_row, dist))
     distances.sort(key=lambda tup: tup[1])
-    neighbors = list()
+    neighbors = []
     for i in range(num_neighbors):
         neighbors.append(distances[i][0])
     return neighbors
@@ -63,14 +70,20 @@ def accuracy_metric(actual, predicted):
             correct += 1
     return correct / float(len(actual)) * 100.0
 
+# Define feature weight
+#                 0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19
+feature_weight = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
 # Load and prepare data
 train = load_data('data_train.csv')
+normalize_data(train)
 
 # Define model parameter
-num_neighbors = 1
+num_neighbors = 5
 
 # Test the KNN
 test = load_data('data_validation.csv')
+normalize_data(test)
 
 accuracy = test_knn(train, test, num_neighbors)
 print('Accuracy: %.3f%%' % (accuracy))
