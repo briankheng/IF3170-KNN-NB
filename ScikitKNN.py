@@ -28,4 +28,15 @@ x_test = test_data.drop(["price_range"], axis = 1)
 y_actual = test_data["price_range"]
 
 y_test = knn.predict(x_test)
+
+# Calculate accuracy percentage
+def accuracy_metric(actual, predicted):
+    correct = 0
+    for i in range(len(actual)):
+        if actual[i] == predicted[i]:
+            correct += 1
+    return correct / float(len(actual)) * 100.0
+
+print("Accuracy:", accuracy_metric(y_test,y_actual),"%")
+
 print(classification_report(y_test, y_actual))
