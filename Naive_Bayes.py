@@ -50,7 +50,7 @@ def preprocess(data: pd.DataFrame):
                 prob = count / price_count[price]
                 categorical_probs[(category, value, price)] = prob
 
-    # statistic that will be used for calculating binomial naive bayes
+    # statistic that will be used for calculating Gaussian Naive Bayes
     # dict value is dict[column, price range] : value
     mean: dict[tuple[str, int], float] = dict()
     std: dict[tuple[str, int], float] = dict()
@@ -63,12 +63,13 @@ def preprocess(data: pd.DataFrame):
     model = TrainingModel(price_count, categorical_probs, mean, std)
     return model
 
-def count_binomial(value: float, mean: float, std: float):
+def count_normal(value: float, mean: float, std: float):
+    # function for calculating Gaussian Naive Bayes
     exponent = pow(value - mean, 2) / (2 * pow(std, 2))
     exp_value = exp(-exponent)
     denominator = std * sqrt(2 * pi)
-    binomial = exp_value / denominator
-    return binomial
+    normal = exp_value / denominator
+    return normal
 
 def train_data(data: pd.DataFrame, model: TrainingModel):
     price_predictions: list[int] = []
@@ -88,7 +89,7 @@ def train_data(data: pd.DataFrame, model: TrainingModel):
             # Numerical probability
             for column in numerical_columns:
                 tuple_data = (column, price)
-                numerical_prob = count_binomial(data[column][i], model.mean[tuple_data], model.std[tuple_data])
+                numerical_prob = count_normal(data[column][i], model.mean[tuple_data], model.std[tuple_data])
                 prob *= numerical_prob
 
             if prob > maximum_prob:
